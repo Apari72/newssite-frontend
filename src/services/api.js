@@ -54,4 +54,20 @@ export function likeComment(commentId) {
 export function getJournalistProfile(id) {
     return apiFetch(`/api/journalists/${id}`);
 }
+export function getCurrentUser() {
+    return apiFetch("/api/auth/me");
+}
+// ---------- ADMIN ----------
+
+export function getAllUsers() {
+    return apiFetch("/api/admin/users");
+}
+
+export function promoteUserToJournalist(userId) {
+    return apiFetch(`/api/admin/promote/${userId}`, {
+        method: "POST",
+    });
+}
+
+
 
