@@ -16,17 +16,25 @@ function ArticleDetail() {
     const [article, setArticle] = useState(null);
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
+    const [currentUser, setCurrentUser] = useState(null);
 
-    // ARTICLE EDIT STATE
+    // ARTICLE EDIT
     const [isEditingArticle, setIsEditingArticle] = useState(false);
     const [editTitle, setEditTitle] = useState("");
     const [editContent, setEditContent] = useState("");
 
-    // COMMENT EDIT STATE
+    // COMMENT EDIT
     const [editingId, setEditingId] = useState(null);
     const [editingText, setEditingText] = useState("");
 
     const [error, setError] = useState(null);
+
+    // -------- CURRENT USER --------
+    useEffect(() => {
+        apiFetch("/api/auth/me")
+            .then(setCurrentUser)
+            .catch(() => setCurrentUser(null));
+    }, []);
 
     // -------- LOAD ARTICLE --------
     useEffect(() => {
@@ -40,15 +48,11 @@ function ArticleDetail() {
     }, [id]);
 
     // -------- LOAD COMMENTS --------
-    const loadComments = () => {
-        getComments(id).then(setComments).catch(() => {});
-    };
-
     useEffect(() => {
-        loadComments();
+        getComments(id).then(setComments).catch(() => {});
     }, [id]);
 
-    // -------- ARTICLE LIKE --------
+    // -------- LIKE ARTICLE --------
     const handleLikeArticle = async () => {
         try {
             const updated = await apiFetch(`/api/articles/${id}/like`, {
@@ -57,15 +61,14 @@ function ArticleDetail() {
 
             setArticle(prev => ({
                 ...updated,
-                canEdit: prev.canEdit,   // ✅ preserve permission
+                canEdit: prev.canEdit, // ✅ preserve permissions
             }));
         } catch {
             alert("You must be logged in");
         }
     };
 
-
-    // -------- ARTICLE UPDATE --------
+    // -------- UPDATE ARTICLE --------
     const handleUpdateArticle = async () => {
         try {
             const updated = await apiFetch(`/api/articles/${id}`, {
@@ -76,21 +79,23 @@ function ArticleDetail() {
                 }),
             });
 
-            setArticle(updated);
+            setArticle(prev => ({
+                ...updated,
+                canEdit: prev.canEdit, // ✅ preserve permissions
+            }));
+
             setIsEditingArticle(false);
         } catch {
             alert("Update failed");
         }
     };
 
-    // -------- ARTICLE DELETE --------
+    // -------- DELETE ARTICLE --------
     const handleDeleteArticle = async () => {
         if (!window.confirm("Delete this article?")) return;
 
         try {
-            await apiFetch(`/api/articles/${id}`, {
-                method: "DELETE",
-            });
+            await apiFetch(`/api/articles/${id}`, { method: "DELETE" });
             navigate("/");
         } catch {
             alert("Delete failed");
@@ -115,8 +120,8 @@ function ArticleDetail() {
         try {
             await deleteComment(commentId);
             setComments(prev => prev.filter(c => c.id !== commentId));
-        } catch (err) {
-            alert(err.message || "Delete failed");
+        } catch {
+            alert("Delete failed");
         }
     };
 
@@ -176,7 +181,9 @@ function ArticleDetail() {
 
                     <div style={{ marginTop: "10px" }}>
                         <button onClick={handleUpdateArticle}>Save</button>
-                        <button onClick={() => setIsEditingArticle(false)}>Cancel</button>
+                        <button onClick={() => setIsEditingArticle(false)}>
+                            Cancel
+                        </button>
                     </div>
                 </>
             ) : (
@@ -190,9 +197,24 @@ function ArticleDetail() {
                         </Link>
                     </p>
 
-                    <button onClick={handleLikeArticle}>
-                        ❤️ {article.likeCount} | 👁 {article.views}
-                    </button>
+                    {currentUser ? (
+                        <button onClick={handleLikeArticle}>
+                            ❤️ {article.likeCount} | 👁 {article.views}
+                        </button>
+                    ) : (
+                        <a
+                            href="http://localhost:8080/login"
+                            style={{
+                                padding: "6px 12px",
+                                border: "1px solid #ccc",
+                                textDecoration: "none",
+                                borderRadius: "4px"
+                            }}
+                        >
+                            Login
+                        </a>
+
+                    )}
 
                     {article.canEdit && (
                         <div style={{ marginTop: "10px" }}>
@@ -217,21 +239,37 @@ function ArticleDetail() {
             <hr />
             <h3>Comments</h3>
 
-            <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Write a comment..."
-                rows={3}
-                style={{ width: "100%" }}
-            />
-            <button onClick={handleAddComment}>Post Comment</button>
+            {currentUser ? (
+                <>
+                    <textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Write a comment..."
+                        rows={3}
+                        style={{ width: "100%" }}
+                    />
+                    <button onClick={handleAddComment}>Post Comment</button>
+                </>
+            ) : (
+                <p>
+                    <a
+                        href="http://localhost:8080/login"
+                        style={{
+                            padding: "6px 12px",
+                            border: "1px solid #ccc",
+                            textDecoration: "none",
+                            borderRadius: "4px"
+                        }}
+                    >
+                        Login
+                    </a>
+
+                </p>
+            )}
 
             <div style={{ marginTop: "20px" }}>
                 {comments.map(comment => (
-                    <div
-                        key={comment.id}
-                        style={{ borderBottom: "1px solid #ddd", padding: "10px 0" }}
-                    >
+                    <div key={comment.id} style={{ borderBottom: "1px solid #ddd" }}>
                         <strong>{comment.authorName}</strong>
 
                         {editingId === comment.id ? (
@@ -240,48 +278,37 @@ function ArticleDetail() {
                                     value={editingText}
                                     onChange={e => setEditingText(e.target.value)}
                                     rows={2}
-                                    style={{ width: "100%", marginTop: "5px" }}
+                                    style={{ width: "100%" }}
                                 />
-                                <div>
-                                    <button onClick={() => submitEdit(comment.id)}>Save</button>
-                                    <button onClick={() => setEditingId(null)}>Cancel</button>
-                                </div>
+                                <button onClick={() => submitEdit(comment.id)}>
+                                    Save
+                                </button>
+                                <button onClick={() => setEditingId(null)}>
+                                    Cancel
+                                </button>
                             </>
                         ) : (
                             <p>{comment.content}</p>
                         )}
 
-                        <small>{comment.createdAt}</small>
+                        <button onClick={() => handleLikeComment(comment.id)}>
+                            👍 {comment.likeCount}
+                        </button>
 
-                        <div style={{ marginTop: "5px" }}>
-                            <button onClick={() => handleLikeComment(comment.id)}>
-                                👍 {comment.likeCount}
+                        {comment.canEdit && (
+                            <button onClick={() => startEdit(comment)}>
+                                edit
                             </button>
+                        )}
 
-                            {comment.canEdit && (
-                                <button
-                                    onClick={() => startEdit(comment)}
-                                    style={{ marginLeft: "10px" }}
-                                >
-                                    edit
-                                </button>
-                            )}
-
-                            {comment.canDelete && (
-                                <button
-                                    onClick={() => handleDelete(comment.id)}
-                                    style={{
-                                        marginLeft: "10px",
-                                        color: "red",
-                                        border: "none",
-                                        background: "none",
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    delete
-                                </button>
-                            )}
-                        </div>
+                        {comment.canDelete && (
+                            <button
+                                onClick={() => handleDelete(comment.id)}
+                                style={{ color: "red" }}
+                            >
+                                delete
+                            </button>
+                        )}
                     </div>
                 ))}
             </div>
