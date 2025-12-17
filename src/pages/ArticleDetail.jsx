@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
     apiFetch,
     getComments,
@@ -11,18 +11,31 @@ import {
 
 function ArticleDetail() {
     const { id } = useParams();
+    const navigate = useNavigate();
 
     const [article, setArticle] = useState(null);
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
+
+    // ARTICLE EDIT STATE
+    const [isEditingArticle, setIsEditingArticle] = useState(false);
+    const [editTitle, setEditTitle] = useState("");
+    const [editContent, setEditContent] = useState("");
+
+    // COMMENT EDIT STATE
     const [editingId, setEditingId] = useState(null);
     const [editingText, setEditingText] = useState("");
+
     const [error, setError] = useState(null);
 
     // -------- LOAD ARTICLE --------
     useEffect(() => {
         apiFetch(`/api/articles/${id}`)
-            .then(setArticle)
+            .then(data => {
+                setArticle(data);
+                setEditTitle(data.title);
+                setEditContent(data.content);
+            })
             .catch(() => setError("Failed to load article"));
     }, [id]);
 
@@ -41,9 +54,46 @@ function ArticleDetail() {
             const updated = await apiFetch(`/api/articles/${id}/like`, {
                 method: "POST",
             });
-            setArticle(updated);
+
+            setArticle(prev => ({
+                ...updated,
+                canEdit: prev.canEdit,   // ✅ preserve permission
+            }));
         } catch {
             alert("You must be logged in");
+        }
+    };
+
+
+    // -------- ARTICLE UPDATE --------
+    const handleUpdateArticle = async () => {
+        try {
+            const updated = await apiFetch(`/api/articles/${id}`, {
+                method: "PUT",
+                body: JSON.stringify({
+                    title: editTitle,
+                    content: editContent,
+                }),
+            });
+
+            setArticle(updated);
+            setIsEditingArticle(false);
+        } catch {
+            alert("Update failed");
+        }
+    };
+
+    // -------- ARTICLE DELETE --------
+    const handleDeleteArticle = async () => {
+        if (!window.confirm("Delete this article?")) return;
+
+        try {
+            await apiFetch(`/api/articles/${id}`, {
+                method: "DELETE",
+            });
+            navigate("/");
+        } catch {
+            alert("Delete failed");
         }
     };
 
@@ -108,20 +158,60 @@ function ArticleDetail() {
         <div style={{ padding: "40px", maxWidth: "800px" }}>
             <Link to="/">← Back to News</Link>
 
-            <h1>{article.title}</h1>
-            <p>
-                By{" "}
-                <Link to={`/journalists/${article.author.id}`}>
-                    <strong>{article.author.name}</strong>
-                </Link>
-            </p>
+            {/* ---------- ARTICLE ---------- */}
+            {isEditingArticle ? (
+                <>
+                    <input
+                        value={editTitle}
+                        onChange={e => setEditTitle(e.target.value)}
+                        style={{ width: "100%", fontSize: "24px" }}
+                    />
 
-            <button onClick={handleLikeArticle}>
-                ❤️ {article.likeCount} | 👁 {article.views}
-            </button>
+                    <textarea
+                        value={editContent}
+                        onChange={e => setEditContent(e.target.value)}
+                        rows={10}
+                        style={{ width: "100%", marginTop: "10px" }}
+                    />
 
-            <hr />
-            <div dangerouslySetInnerHTML={{ __html: article.content }} />
+                    <div style={{ marginTop: "10px" }}>
+                        <button onClick={handleUpdateArticle}>Save</button>
+                        <button onClick={() => setIsEditingArticle(false)}>Cancel</button>
+                    </div>
+                </>
+            ) : (
+                <>
+                    <h1>{article.title}</h1>
+
+                    <p>
+                        By{" "}
+                        <Link to={`/journalists/${article.author.id}`}>
+                            <strong>{article.author.name}</strong>
+                        </Link>
+                    </p>
+
+                    <button onClick={handleLikeArticle}>
+                        ❤️ {article.likeCount} | 👁 {article.views}
+                    </button>
+
+                    {article.canEdit && (
+                        <div style={{ marginTop: "10px" }}>
+                            <button onClick={() => setIsEditingArticle(true)}>
+                                Edit
+                            </button>
+                            <button
+                                onClick={handleDeleteArticle}
+                                style={{ marginLeft: "10px", color: "red" }}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    )}
+
+                    <hr />
+                    <div dangerouslySetInnerHTML={{ __html: article.content }} />
+                </>
+            )}
 
             {/* ---------- COMMENTS ---------- */}
             <hr />
@@ -144,15 +234,14 @@ function ArticleDetail() {
                     >
                         <strong>{comment.authorName}</strong>
 
-                        {/* EDIT MODE */}
                         {editingId === comment.id ? (
                             <>
-                    <textarea
-                        value={editingText}
-                        onChange={e => setEditingText(e.target.value)}
-                        rows={2}
-                        style={{ width: "100%", marginTop: "5px" }}
-                    />
+                                <textarea
+                                    value={editingText}
+                                    onChange={e => setEditingText(e.target.value)}
+                                    rows={2}
+                                    style={{ width: "100%", marginTop: "5px" }}
+                                />
                                 <div>
                                     <button onClick={() => submitEdit(comment.id)}>Save</button>
                                     <button onClick={() => setEditingId(null)}>Cancel</button>

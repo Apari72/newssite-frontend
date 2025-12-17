@@ -61,9 +61,12 @@ function CreateArticle() {
         });
 
         if (!response.ok) {
-            alert("Image upload failed");
+            const text = await response.text();
+            console.error(text);
+            alert("Image upload failed (check console)");
             return;
         }
+
 
         const data = await response.json();
         exec("insertImage", data.url);
