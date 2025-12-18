@@ -61,17 +61,17 @@ const Header = ({ user }) => {
             {/* ... Main Header (Logo/Nav) remains unchanged ... */}
             <div className="main-header container">
                 <div className="logo">
-                    <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                        THE <span className="gold-text">DAILY</span> NEWS
+                    <Link to="/" className="logo">
+                        THE <span className="gold-text">GILDED</span> PRESS
                     </Link>
                 </div>
-                <nav className="main-nav">
-                    <Link to="/" className="nav-item active">World</Link>
-                    <a href="#" className="nav-item">Business</a>
-                    <a href="#" className="nav-item">Tech</a>
-                    <a href="#" className="nav-item">Science</a>
-                    <a href="#" className="nav-item">Health</a>
-                    <a href="#" className="nav-item">Style</a>
+                <nav className="nav-links">
+                    <Link to="/">World</Link>
+                    <Link to="/category/Business">Business</Link>
+                    <Link to="/category/Tech">Tech</Link>
+                    <Link to="/category/Science">Science</Link>
+                    <Link to="/category/Health">Health</Link>
+                    <Link to="/category/Style">Style</Link>
                 </nav>
             </div>
             <div className="border-bottom"></div>

@@ -146,3 +146,31 @@
 .dropdown-item.logout:hover {
     color: #ff6b6b; /* Subtle red for logout */
 }
+.nav-links {
+    display: flex;
+    justify-content: center;
+    gap: 30px; /* Adds space between the words */
+    padding: 15px 0;
+    margin-top: 10px;
+    border-top: 1px solid #333; /* Adds the separator lines */
+    border-bottom: 1px solid #333;
+}
+
+.nav-links a {
+    color: #ffffff; /* White text on black background */
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #D4AF37; /* Gold on hover */
+}
+
+/* Optional: Style for the "Active" link if using NavLink later */
+.nav-links a.active {
+    color: #D4AF37;
+}

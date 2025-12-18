@@ -1,35 +1,40 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { apiFetch } from "../services/api"; // Ensure this path is correct
-import "./CreateArticle.css"; // We will create this CSS file next
+import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { apiFetch, uploadImage } from "../services/api"; // Import uploadImage
+import "./CreateArticle.css";
 
 function CreateArticle() {
-    const [title, setTitle] = useState("");
-    const [category, setCategory] = useState("General"); // Added Category support
-    const [content, setContent] = useState("");
-    const [error, setError] = useState(null);
-    const [currentUser, setCurrentUser] = useState(null);
-
     const navigate = useNavigate();
     const editorRef = useRef(null);
+    const fileInputRef = useRef(null); // Ref for the hidden file input
 
-    // ---------- FRONTEND GUARD ----------
-    useEffect(() => {
-        // Fetch user to check role
-        apiFetch("/api/auth/me")
-            .then(user => {
-                if (!user || (user.role !== "ADMIN" && user.role !== "JOURNALIST")) {
-                    navigate("/");
-                }
-                setCurrentUser(user);
-            })
-            .catch(() => navigate("/"));
-    }, [navigate]);
+    const [title, setTitle] = useState("");
+    const [category, setCategory] = useState("General");
+    const [content, setContent] = useState("");
+    const [imageUrl, setImageUrl] = useState(""); // Store the uploaded URL
+    const [uploading, setUploading] = useState(false);
 
-    // ---------- PUBLISH ----------
+    // --- HANDLE IMAGE UPLOAD ---
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploading(true);
+        try {
+            const data = await uploadImage(file);
+            // The backend returns "/uploads/xyz.jpg", we prepend the domain
+            const fullUrl = `http://localhost:8080${data.url}`;
+            setImageUrl(fullUrl);
+        } catch (err) {
+            alert("Failed to upload image: " + err.message);
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const handlePublish = async () => {
         if (!title.trim() || !content.trim()) {
-            setError("Title and content are required");
+            alert("Title and content are required!");
             return;
         }
 
@@ -39,65 +44,31 @@ function CreateArticle() {
                 body: JSON.stringify({
                     title,
                     content,
-                    category // Send category if your backend supports it
+                    category,
+                    imageUrl // Send the image URL to the article API
                 }),
             });
-
             navigate("/");
         } catch (err) {
-            setError(err.message || "Publish failed");
+            alert(err.message || "Failed to publish");
         }
     };
 
-    // ---------- EDITOR COMMANDS ----------
     const exec = (command, value = null) => {
         editorRef.current?.focus();
         document.execCommand(command, false, value);
     };
 
-    // ---------- IMAGE UPLOAD ----------
-    const handleImageUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-            // Using standard fetch here because apiFetch handles JSON, not FormData usually
-            // Adjust URL to your actual upload endpoint
-            const response = await fetch("http://localhost:8080/api/uploads/image", {
-                method: "POST",
-                credentials: "include", // Important for session
-                body: formData,
-            });
-
-            if (!response.ok) throw new Error("Upload failed");
-
-            const data = await response.json(); // Expecting { url: "..." }
-            exec("insertImage", data.url);
-        } catch (err) {
-            console.error(err);
-            alert("Image upload failed. Ensure backend supports /api/uploads/image");
-        }
-    };
-
-    if (!currentUser) return <div className="loading">Checking permissions...</div>;
-
     return (
         <div className="container create-article-page">
             <div className="editor-header">
-                <Link to="/" className="back-link">← Back to Home</Link>
-                <h1>Write New Story</h1>
+                <h1>Write a New Story</h1>
             </div>
-
-            {error && <div className="error-banner">{error}</div>}
 
             <div className="input-group">
                 <input
-                    type="text"
                     className="title-input"
-                    placeholder="Article Headline"
+                    placeholder="Headline..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                 />
@@ -110,60 +81,61 @@ function CreateArticle() {
                     <option value="Business">Business</option>
                     <option value="Tech">Tech</option>
                     <option value="Science">Science</option>
+                    <option value="Health">Health</option>
                     <option value="Style">Style</option>
                 </select>
             </div>
 
-            {/* TOOLBAR */}
-            <div className="editor-toolbar">
-                <div className="toolbar-group">
-                    <button type="button" onClick={() => exec("bold")} title="Bold"><b>B</b></button>
-                    <button type="button" onClick={() => exec("italic")} title="Italic"><i>I</i></button>
-                    <button type="button" onClick={() => exec("underline")} title="Underline"><u>U</u></button>
-                </div>
-
-                <div className="toolbar-divider"></div>
-
-                <div className="toolbar-group">
-                    <button type="button" onClick={() => exec("formatBlock", "h2")}>H2</button>
-                    <button type="button" onClick={() => exec("formatBlock", "h3")}>H3</button>
-                    <button type="button" onClick={() => exec("justifyLeft")}>Left</button>
-                    <button type="button" onClick={() => exec("justifyCenter")}>Center</button>
-                </div>
-
-                <div className="toolbar-divider"></div>
-
-                <div className="toolbar-group">
-                    <button type="button" onClick={() => document.getElementById("imageUpload").click()}>
-                        📷 Image
-                    </button>
-                    <button type="button" onClick={() => exec("createLink", prompt("Enter URL:"))}>
-                        Link
-                    </button>
-                </div>
-
+            {/* --- NEW IMAGE UPLOAD SECTION --- */}
+            <div className="image-upload-section" style={{marginBottom: '20px'}}>
                 <input
                     type="file"
+                    ref={fileInputRef}
+                    style={{display: 'none'}}
+                    onChange={handleFileChange}
                     accept="image/*"
-                    id="imageUpload"
-                    style={{ display: "none" }}
-                    onChange={handleImageUpload}
                 />
+
+                <button
+                    className="btn-outline"
+                    onClick={() => fileInputRef.current.click()}
+                    disabled={uploading}
+                >
+                    {uploading ? "Uploading..." : "📷 Upload Cover Image"}
+                </button>
+
+                {imageUrl && (
+                    <div style={{marginTop: '10px'}}>
+                        <img src={imageUrl} alt="Preview" style={{height: '150px', borderRadius: '4px', border: '1px solid #ddd'}} />
+                        <p style={{fontSize: '0.8rem', color: '#666'}}>Cover Image Set</p>
+                    </div>
+                )}
+            </div>
+            {/* -------------------------------- */}
+
+            {/* EDITOR TOOLBAR */}
+            <div className="editor-toolbar">
+                <button onClick={() => exec("bold")}><b>B</b></button>
+                <button onClick={() => exec("italic")}><i>I</i></button>
+                <button onClick={() => exec("underline")}><u>U</u></button>
+                <div className="toolbar-divider"></div>
+                <button onClick={() => exec("formatBlock", "h2")}>H2</button>
+                <button onClick={() => exec("formatBlock", "h3")}>H3</button>
             </div>
 
-            {/* WRITING AREA */}
             <div
                 ref={editorRef}
                 className="editor-content"
                 contentEditable
                 onInput={(e) => setContent(e.currentTarget.innerHTML)}
                 suppressContentEditableWarning
-                placeholder="Start writing your story here..."
+                placeholder="Start writing..."
             />
 
             <div className="action-bar">
-                <button className="btn-gold" onClick={handlePublish}>Publish Article</button>
-                <button className="btn-outline" onClick={() => navigate("/")}>Cancel</button>
+                <button className="btn-gold" onClick={handlePublish}>
+                    Publish Article
+                </button>
             </div>
         </div>
     );

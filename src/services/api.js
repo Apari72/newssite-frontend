@@ -31,7 +31,24 @@ export async function apiFetch(path, options = {}) {
         throw new Error("Server sent invalid JSON");
     }
 }
+export const uploadImage = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
 
+    // We use the basic fetch here because we are sending FormData, not JSON
+    // Note: Do not manually set Content-Type header; fetch does it automatically for FormData
+    const response = await fetch("http://localhost:8080/api/uploads/image", {
+        method: "POST",
+        body: formData,
+        credentials: "include"
+    });
+
+    if (!response.ok) {
+        throw new Error("Image upload failed");
+    }
+
+    return response.json(); // Returns { url: "/uploads/..." }
+};
 
 // ---------- COMMENTS ----------
 
@@ -40,13 +57,15 @@ export function getComments(articleId) {
 }
 
 export function addComment(articleId, content) {
+    // content is expected to be an object: { content: "text" }
     return apiFetch(`/api/articles/${articleId}/comments`, {
         method: "POST",
-        body: JSON.stringify(content), // content should be { content: "..." }
+        body: JSON.stringify(content),
     });
 }
 
 export function updateComment(commentId, content) {
+    // content should be: { content: "updated text" }
     return apiFetch(`/api/comments/${commentId}`, {
         method: "PUT",
         body: JSON.stringify(content),
@@ -85,4 +104,14 @@ export function promoteUserToJournalist(userId) {
     return apiFetch(`/api/admin/promote/${userId}`, {
         method: "POST",
     });
+}
+export function getArticles(category = null) {
+    // If category exists, append it to URL: /api/articles?category=Tech
+    const url = category
+        ? `/api/articles?category=${encodeURIComponent(category)}`
+        : "/api/articles";
+    return apiFetch(url);
+}
+export function toggleArticleLike(articleId) {
+    return apiFetch(`/api/articles/${articleId}/like`, { method: "POST" });
 }

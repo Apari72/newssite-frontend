@@ -8,6 +8,7 @@ import ArticleDetail from "./components/ArticleDetail";
 import CreateArticle from "./components/CreateArticle";
 import AdminDashboard from "./components/AdminDashboard";
 import EditArticle from "./components/EditArticle";
+import CategoryPage from "./components/CategoryPage.jsx";
 // IMPORT THE NEW HOME PAGE
 import Home from "./components/Home";
 
@@ -31,11 +32,12 @@ function App() {
                 <Routes>
                     {/* The Home component now handles its own data fetching */}
                     <Route path="/" element={<Home />} />
-                    <Route path="/articles/:id" element={<ArticleDetail />} />
+                    <Route path="/articles/:id" element={<ArticleDetail currentUser={currentUser} />} />
                     <Route path="/journalists/:id" element={<JournalistProfile />} />
                     <Route path="/create-article" element={<CreateArticle />} />
                     <Route path="/dashboard" element={<AdminDashboard />} />
                     <Route path="/edit-article/:id" element={<EditArticle />} />
+                    <Route path="/category/:categoryName" element={<CategoryPage />} />
                 </Routes>
             </main>
 
