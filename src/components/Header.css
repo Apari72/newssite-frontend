@@ -95,3 +95,54 @@
     background: linear-gradient(to right, var(--color-black), var(--color-gold), var(--color-black));
     width: 100%;
 }
+/* User Section Styles */
+.user-section {
+    position: relative;
+    cursor: pointer;
+}
+
+.welcome-text {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: var(--color-black);
+    border: 1px solid var(--color-gold);
+    min-width: 150px;
+    z-index: 1000;
+    margin-top: 10px;
+    padding: 5px 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.dropdown-item {
+    display: block;
+    padding: 10px 20px;
+    color: var(--color-white);
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: background 0.2s;
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background-color: var(--color-dark-gray);
+    color: var(--color-gold);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: #333;
+    margin: 5px 0;
+}
+
+.dropdown-item.logout:hover {
+    color: #ff6b6b; /* Subtle red for logout */
+}

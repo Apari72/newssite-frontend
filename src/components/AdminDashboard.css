@@ -1,0 +1,94 @@
+.dashboard-page {
+    padding-top: 40px;
+    padding-bottom: 80px;
+    min-height: 60vh;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 20px;
+}
+
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-sans);
+}
+
+.dashboard-table thead {
+    background-color: var(--color-black);
+    color: var(--color-white);
+}
+
+.dashboard-table th {
+    padding: 15px;
+    text-align: left;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+}
+
+.dashboard-table td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.dashboard-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+/* Role Badges */
+.role-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.role-badge.admin {
+    background-color: var(--color-black);
+    color: var(--color-gold);
+}
+
+.role-badge.journalist {
+    background-color: var(--color-gold-light);
+    color: var(--color-gold-dark);
+}
+
+.role-badge.user {
+    background-color: #eee;
+    color: #666;
+}
+
+/* Buttons */
+.btn-promote {
+    background: none;
+    border: 1px solid var(--color-gold);
+    color: var(--color-gold-dark);
+    padding: 5px 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    transition: all 0.3s;
+}
+
+.btn-promote:hover {
+    background-color: var(--color-gold);
+    color: white;
+}
+
+.status-text {
+    font-size: 0.8rem;
+    color: #888;
+    font-style: italic;
+}

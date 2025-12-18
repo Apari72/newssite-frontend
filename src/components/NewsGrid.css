@@ -90,3 +90,23 @@
 .read-more:hover {
     color: var(--color-gold);
 }
+.author-byline {
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+    font-style: italic;
+    font-family: var(--font-serif);
+    color: #555;
+}
+
+.gold-link {
+    color: var(--color-gold-dark);
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.3s;
+}
+
+.gold-link:hover {
+    color: var(--color-black);
+    border-bottom-color: var(--color-black);
+}
