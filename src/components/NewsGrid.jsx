@@ -2,7 +2,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 import "./NewsGrid.css";
 
-const NewsGrid = ({ articles }) => {
+function NewsGrid({ articles, title = "Latest Headlines" }) {
+    if (!articles || articles.length === 0) return null;
     return (
         <section className="container news-grid-section">
             <div className="section-header">

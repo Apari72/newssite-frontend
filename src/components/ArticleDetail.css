@@ -40,9 +40,22 @@
 }
 
 .meta-info {
-    color: #ddd;
-    font-size: 0.9rem;
-    font-family: sans-serif;
+    font-family: 'Arial', sans-serif;
+    font-size: 1.1rem; /* Increased from small text */
+    color: #ccc;
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.author-name {
+    color: #D4AF37; /* Gold */
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-right: 5px;
+    font-size: 1.2rem; /* Make the name slightly larger than the date */
 }
 
 .admin-toolbar {
@@ -177,6 +190,7 @@
     cursor: pointer;
     padding: 0;
 }
+
 
 .btn-text-action:hover { text-decoration: underline; color: #D4AF37; }
 .btn-text-action.delete:hover { color: red; }

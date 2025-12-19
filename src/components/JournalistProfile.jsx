@@ -1,86 +1,68 @@
-import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { apiFetch } from "../services/api";
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { getJournalistProfile } from "../services/api";
+import NewsGrid from "./NewsGrid"; // <--- 1. Import NewsGrid
 import "./JournalistProfile.css";
 
-const JournalistProfile = () => {
+function JournalistProfile() {
     const { id } = useParams();
     const [profile, setProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        apiFetch(`/api/journalists/${id}`)
-            .then(setProfile)
-            .catch(() => {});
+        getJournalistProfile(id)
+            .then(data => setProfile(data))
+            .catch(err => console.error(err))
+            .finally(() => setLoading(false));
     }, [id]);
 
-    if (!profile) return <div className="loading">Loading Profile...</div>;
+    if (loading) return <div className="loading">Loading Profile...</div>;
+    if (!profile) return <div className="error">Journalist not found.</div>;
 
     return (
         <div className="journalist-profile-page">
-            {/* ---------- PROFILE HEADER ---------- */}
-            <div className="profile-header">
-                <div className="container profile-flex">
-                    <div className="profile-info">
-                        <span className="profile-label">Journalist Profile</span>
-                        <h1>{profile.name}</h1>
 
+            {/* HEADER (Keep this, you liked it!) */}
+            <div className="profile-header">
+                <div className="profile-flex">
+                    <div className="profile-image-wrapper">
+                        <img
+                            src={profile.avatarUrl || `https://ui-avatars.com/api/?name=${profile.name}&background=000&color=D4AF37&size=256`}
+                            alt={profile.name}
+                            className="profile-avatar"
+                        />
+                    </div>
+                    <div className="profile-info">
+                        <span className="profile-label">Senior Columnist</span>
+                        <h1>{profile.name}</h1>
                         <div className="divider-small"></div>
-                        <p className="profile-bio">{profile.bio}</p>
+                        <p className="profile-bio">{profile.bio || "Journalist at The Gilded Press."}</p>
 
                         <div className="profile-stats">
-                            <div className="stat-box">
-                                <span className="stat-number">
-                                    {profile.totalArticles}
-                                </span>
-                                <span className="stat-label">
-                                    Articles Published
-                                </span>
+                            <div className="stat-item">
+                                <span className="stat-number">{profile.totalViews || 0}</span>
+                                <span className="stat-label">Total Reads</span>
                             </div>
-                            <div className="stat-box">
-                                <span className="stat-number">
-                                    {(profile.rating / 2).toFixed(1)} ⭐
-                                </span>
-                                <span className="stat-label">Reader Rating</span>
+                            <div className="stat-item">
+                                <span className="stat-number">{profile.articleCount || 0}</span>
+                                <span className="stat-label">Articles</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* ---------- ARTICLES ---------- */}
-            <div className="container journalist-feed">
-                <h2 className="feed-title">Recent Publications</h2>
-
-                <div className="grid-container">
-                    {profile.articles.map((item) => (
-                        <article key={item.id} className="news-card">
-                            <div className="card-image">
-                                <img
-                                    src={item.imageUrl || "/placeholder.jpg"}
-                                    alt={item.title}
-                                />
-                            </div>
-
-                            <div className="card-content">
-                                <span className="card-category">
-                                    {item.category || "General"}
-                                </span>
-                                <h3>{item.title}</h3>
-                                <p>{item.summary}</p>
-
-                                <Link
-                                    to={`/articles/${item.id}`}
-                                    className="read-more"
-                                >
-                                    Read Full Story →
-                                </Link>
-                            </div>
-                        </article>
-                    ))}
-                </div>
+            {/* LOWER PART: REPLACED WITH NEWS GRID */}
+            {/* This will automatically look like the homepage cards */}
+            <div className="profile-content-wrapper">
+                <NewsGrid
+                    articles={profile.articles}
+                    title="Latest Publications"
+                />
             </div>
+
         </div>
     );
-};
+}
 
 export default JournalistProfile;
