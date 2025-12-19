@@ -1,28 +1,37 @@
 // src/services/api.js
 
+// 1. DEFINE BASE URL
+// If on Vercel, it uses the Env Var. If local, it defaults to localhost.
+// Note: We remove the trailing slash from the env var if present to avoid double slashes.
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080").replace(/\/$/, "");
+
 export async function apiFetch(path, options = {}) {
-    const response = await fetch(path, {
-        credentials: "include",
+    // 2. CONSTRUCT FULL URL
+    // This turns "/api/articles" into "https://your-render-backend.com/api/articles"
+    const url = `${BASE_URL}${path}`;
+
+    const response = await fetch(url, {
+        credentials: "include", // Crucial for cookies/sessions across domains
         headers: {
             "Content-Type": "application/json",
         },
         ...options,
     });
 
-    // 1. Handle Errors (Non-200 responses)
+    // Handle Errors (Non-200 responses)
     if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || `Error ${response.status}: ${response.statusText}`);
     }
 
-    // 2. Handle 204 No Content (Standard empty success)
+    // Handle 204 No Content
     if (response.status === 204) {
         return null;
     }
 
-    // 3. FIX: Handle 200 OK with empty body (Prevents "Unexpected end of JSON")
+    // Handle 200 OK with empty body
     const text = await response.text();
-    if (!text) return null; // If body is empty, return null instead of crashing
+    if (!text) return null;
 
     try {
         return JSON.parse(text);
@@ -31,13 +40,15 @@ export async function apiFetch(path, options = {}) {
         throw new Error("Server sent invalid JSON");
     }
 }
+
 export const uploadImage = async (file) => {
     const formData = new FormData();
     formData.append("file", file);
 
-    // We use the basic fetch here because we are sending FormData, not JSON
-    // Note: Do not manually set Content-Type header; fetch does it automatically for FormData
-    const response = await fetch("http://localhost:8080/api/uploads/image", {
+    // FIX: Removed hardcoded "http://localhost:8080"
+    const url = `${BASE_URL}/api/uploads/image`;
+
+    const response = await fetch(url, {
         method: "POST",
         body: formData,
         credentials: "include"
@@ -47,7 +58,7 @@ export const uploadImage = async (file) => {
         throw new Error("Image upload failed");
     }
 
-    return response.json(); // Returns { url: "/uploads/..." }
+    return response.json();
 };
 
 // ---------- COMMENTS ----------
@@ -57,7 +68,6 @@ export function getComments(articleId) {
 }
 
 export function addComment(articleId, content) {
-    // content is expected to be an object: { content: "text" }
     return apiFetch(`/api/articles/${articleId}/comments`, {
         method: "POST",
         body: JSON.stringify(content),
@@ -65,7 +75,6 @@ export function addComment(articleId, content) {
 }
 
 export function updateComment(commentId, content) {
-    // content should be: { content: "updated text" }
     return apiFetch(`/api/comments/${commentId}`, {
         method: "PUT",
         body: JSON.stringify(content),
@@ -105,13 +114,14 @@ export function promoteUserToJournalist(userId) {
         method: "POST",
     });
 }
+
 export function getArticles(category = null) {
-    // If category exists, append it to URL: /api/articles?category=Tech
     const url = category
         ? `/api/articles?category=${encodeURIComponent(category)}`
         : "/api/articles";
     return apiFetch(url);
 }
+
 export function toggleArticleLike(articleId) {
     return apiFetch(`/api/articles/${articleId}/like`, { method: "POST" });
 }
