@@ -1,32 +1,28 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-// Add uploadImage to imports
-import { apiFetch, uploadImage } from "../services/api";
+// Import API_BASE_URL
+import { apiFetch, uploadImage, API_BASE_URL } from "../services/api";
 import "./CreateArticle.css";
 
 function EditArticle() {
     const { id } = useParams();
     const navigate = useNavigate();
     const editorRef = useRef(null);
-    // Add file input ref
     const fileInputRef = useRef(null);
 
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [category, setCategory] = useState("General");
-    // Add state for image and uploading status
     const [imageUrl, setImageUrl] = useState("");
     const [uploading, setUploading] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    // 1. FETCH DATA (Updated to get existing imageUrl)
     useEffect(() => {
         apiFetch(`/api/articles/${id}`)
             .then(data => {
                 setTitle(data.title);
                 setContent(data.content);
                 setCategory(data.category || "General");
-                // Load existing image URL
                 setImageUrl(data.imageUrl || "");
                 setLoading(false);
             })
@@ -36,7 +32,6 @@ function EditArticle() {
             });
     }, [id, navigate]);
 
-    // 2. POPULATE EDITOR
     useEffect(() => {
         if (!loading && editorRef.current && content) {
             if (editorRef.current.innerHTML === "") {
@@ -45,7 +40,6 @@ function EditArticle() {
         }
     }, [loading, content]);
 
-    // --- NEW: HANDLE IMAGE UPLOAD (Reused from CreateArticle) ---
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -53,8 +47,8 @@ function EditArticle() {
         setUploading(true);
         try {
             const data = await uploadImage(file);
-            // Prepend domain to the relative path returned by backend
-            const fullUrl = `http://localhost:8080${data.url}`;
+            // FIX: Use API_BASE_URL instead of localhost
+            const fullUrl = `${API_BASE_URL}${data.url}`;
             setImageUrl(fullUrl);
         } catch (err) {
             alert("Failed to upload image: " + err.message);
@@ -62,13 +56,11 @@ function EditArticle() {
             setUploading(false);
         }
     };
-    // ---------------------------------------------------------
 
     const handleSave = async () => {
         if (!title.trim() || !content.trim()) return;
 
         try {
-            // Include category and imageUrl in the PUT request
             await apiFetch(`/api/articles/${id}`, {
                 method: "PUT",
                 body: JSON.stringify({ title, content, category, imageUrl }),
@@ -101,7 +93,6 @@ function EditArticle() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                 />
-                {/* Category Select added back for context */}
                 <select
                     className="category-select"
                     value={category}
@@ -115,7 +106,6 @@ function EditArticle() {
                 </select>
             </div>
 
-            {/* --- NEW IMAGE UPLOAD SECTION --- */}
             <div className="image-upload-section" style={{marginBottom: '20px'}}>
                 <input
                     type="file"
@@ -140,10 +130,8 @@ function EditArticle() {
                     </div>
                 )}
             </div>
-            {/* -------------------------------- */}
 
             <div className="editor-toolbar">
-                {/* ... existing toolbar buttons ... */}
                 <button onClick={() => exec("bold")}><b>B</b></button>
                 <button onClick={() => exec("italic")}><i>I</i></button>
                 <button onClick={() => exec("underline")}><u>U</u></button>

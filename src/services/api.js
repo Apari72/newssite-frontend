@@ -1,35 +1,30 @@
 // src/services/api.js
 
-// 1. DEFINE BASE URL
-// If on Vercel, it uses the Env Var. If local, it defaults to localhost.
-// Note: We remove the trailing slash from the env var if present to avoid double slashes.
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080").replace(/\/$/, "");
+// 1. DEFINE AND EXPORT BASE URL
+// We export this constant so we can use it in Header.jsx and other components
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8080").replace(/\/$/, "");
 
 export async function apiFetch(path, options = {}) {
     // 2. CONSTRUCT FULL URL
-    // This turns "/api/articles" into "https://your-render-backend.com/api/articles"
-    const url = `${BASE_URL}${path}`;
+    const url = `${API_BASE_URL}${path}`;
 
     const response = await fetch(url, {
-        credentials: "include", // Crucial for cookies/sessions across domains
+        credentials: "include",
         headers: {
             "Content-Type": "application/json",
         },
         ...options,
     });
 
-    // Handle Errors (Non-200 responses)
     if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || `Error ${response.status}: ${response.statusText}`);
     }
 
-    // Handle 204 No Content
     if (response.status === 204) {
         return null;
     }
 
-    // Handle 200 OK with empty body
     const text = await response.text();
     if (!text) return null;
 
@@ -45,8 +40,8 @@ export const uploadImage = async (file) => {
     const formData = new FormData();
     formData.append("file", file);
 
-    // FIX: Removed hardcoded "http://localhost:8080"
-    const url = `${BASE_URL}/api/uploads/image`;
+    // Use the dynamic URL
+    const url = `${API_BASE_URL}/api/uploads/image`;
 
     const response = await fetch(url, {
         method: "POST",

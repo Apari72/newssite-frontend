@@ -1,20 +1,20 @@
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiFetch, uploadImage } from "../services/api"; // Import uploadImage
+// Import API_BASE_URL
+import { apiFetch, uploadImage, API_BASE_URL } from "../services/api";
 import "./CreateArticle.css";
 
 function CreateArticle() {
     const navigate = useNavigate();
     const editorRef = useRef(null);
-    const fileInputRef = useRef(null); // Ref for the hidden file input
+    const fileInputRef = useRef(null);
 
     const [title, setTitle] = useState("");
     const [category, setCategory] = useState("General");
     const [content, setContent] = useState("");
-    const [imageUrl, setImageUrl] = useState(""); // Store the uploaded URL
+    const [imageUrl, setImageUrl] = useState("");
     const [uploading, setUploading] = useState(false);
 
-    // --- HANDLE IMAGE UPLOAD ---
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -22,8 +22,8 @@ function CreateArticle() {
         setUploading(true);
         try {
             const data = await uploadImage(file);
-            // The backend returns "/uploads/xyz.jpg", we prepend the domain
-            const fullUrl = `http://localhost:8080${data.url}`;
+            // FIX: Use API_BASE_URL instead of localhost
+            const fullUrl = `${API_BASE_URL}${data.url}`;
             setImageUrl(fullUrl);
         } catch (err) {
             alert("Failed to upload image: " + err.message);
@@ -45,7 +45,7 @@ function CreateArticle() {
                     title,
                     content,
                     category,
-                    imageUrl // Send the image URL to the article API
+                    imageUrl
                 }),
             });
             navigate("/");
@@ -86,7 +86,6 @@ function CreateArticle() {
                 </select>
             </div>
 
-            {/* --- NEW IMAGE UPLOAD SECTION --- */}
             <div className="image-upload-section" style={{marginBottom: '20px'}}>
                 <input
                     type="file"
@@ -111,9 +110,7 @@ function CreateArticle() {
                     </div>
                 )}
             </div>
-            {/* -------------------------------- */}
 
-            {/* EDITOR TOOLBAR */}
             <div className="editor-toolbar">
                 <button onClick={() => exec("bold")}><b>B</b></button>
                 <button onClick={() => exec("italic")}><i>I</i></button>
