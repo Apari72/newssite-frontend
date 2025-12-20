@@ -48,7 +48,7 @@ function EditArticle() {
         try {
             const data = await uploadImage(file);
             // FIX: Use API_BASE_URL instead of localhost
-            const fullUrl = `${API_BASE_URL}${data.url}`;
+            const fullUrl = data.url;
             setImageUrl(fullUrl);
         } catch (err) {
             alert("Failed to upload image: " + err.message);
